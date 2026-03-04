@@ -36,3 +36,11 @@ coverage.xml
 *~
 .vscode/
 .idea/
+.elixir_ls/
+
+# GDrive
+.tmp.drivedownload
+.tmp.driveupload
+
+# Context share with Gemini Chat
+hh_docs/hh_gemini/
