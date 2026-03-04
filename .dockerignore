@@ -1,0 +1,16 @@
+# Elixir artifacts
+_build
+deps
+.elixir_ls
+.fetch
+
+# Rust artifacts
+apps/*/native/target
+
+# Docker/VCS
+.git
+.dockerignore
+Dockerfile
+
+# OS files
+.DS_Store

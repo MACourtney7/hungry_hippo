@@ -1,0 +1,26 @@
+services:
+  ingestor:
+    build:
+      context: .
+      dockerfile: docker/elixir.Dockerfile
+    volumes:
+      - .:/app
+    tty: true
+    stdin_open: true
+    networks:
+      - hungry_hippo_net
+
+  oracle:
+    build:
+      context: .
+      dockerfile: docker/python.Dockerfile
+    volumes:
+      - ./oracle:/app
+    tty: true
+    stdin_open: true
+    networks:
+      - hungry_hippo_net
+
+networks:
+  hungry_hippo_net:
+    driver: bridge
