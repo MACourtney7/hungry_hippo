@@ -23,6 +23,8 @@ defmodule HippoNative.MixProject do
   end
 
   defp deps do
-    []
+    [
+      {:rustler, "~> 0.37", runtime: false}
+    ]
   end
 end
