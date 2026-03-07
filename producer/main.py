@@ -9,6 +9,8 @@ KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "kafka:9092")
 TOPIC = os.environ.get("TARGET_TOPIC", "raw_market_ticks")
 NUM_PUBLISHERS = int(os.environ.get("NUM_PUBLISHERS", "3"))
 TICKER = os.environ.get("TICKER", "FOO/BAR")
+TICK_RATE = float(os.environ.get("TICK_RATE", "0.1"))
+VOLATILITY = float(os.environ.get("VOLATILITY", "0.0001"))
 
 BASE_PRICE = 65000.0
 
@@ -18,7 +20,7 @@ for i in range(1, NUM_PUBLISHERS + 1):
     feed_id = f"Publisher_{i}-{TICKER}"
     # Give each publisher a slightly different starting price
     starting_price = BASE_PRICE + random.uniform(-5.0, 5.0)
-    state[feed_id] = {"price": starting_price, "volatility": 0.0001}
+    state[feed_id] = {"price": starting_price, "volatility": VOLATILITY}
 
 def delivery_report(err, msg):
     if err is not None:
@@ -70,7 +72,7 @@ def main():
 
             producer.poll(0)
             producer.flush()
-            time.sleep(0.1)  # 10 ticks per second per feed
+            time.sleep(TICK_RATE)
 
     except KeyboardInterrupt:
         print("Stopping producer...")

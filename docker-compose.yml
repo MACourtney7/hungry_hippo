@@ -66,6 +66,8 @@ services:
       TARGET_TOPIC: raw_market_ticks
       NUM_PUBLISHERS: 3
       TICKER: FOO/BAR
+      TICK_RATE: "0.1"
+      VOLATILITY: "0.0001"
     depends_on:
       kafka:
         condition: service_healthy
