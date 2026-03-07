@@ -43,6 +43,19 @@ services:
       retries: 5
       start_period: 20s
 
+  hippo_producer:
+    build:
+      context: ./producer
+    environment:
+      PYTHONUNBUFFERED: 1
+      KAFKA_BROKER: kafka:9092
+      TARGET_TOPIC: raw_market_ticks
+      NUM_PUBLISHERS: 3
+      TICKER: FOO/BAR
+    depends_on:
+      kafka:
+        condition: service_healthy
+
 networks:
   hungry_hippo_net:
     driver: bridge
