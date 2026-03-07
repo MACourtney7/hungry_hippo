@@ -28,6 +28,7 @@ defmodule HippoIngest.MixProject do
     [
       {:broadway_kafka, "~> 0.4.1"},
       {:jason, "~> 1.4"},
+      {:req, "~> 0.5.0"},
       {:hippo_native, in_umbrella: true}
     ]
   end

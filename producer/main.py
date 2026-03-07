@@ -5,7 +5,7 @@ import random
 from confluent_kafka import Producer
 
 # Configuration via Environment Variables
-KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "localhost:9092")
+KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "kafka:9092")
 TOPIC = os.environ.get("TARGET_TOPIC", "raw_market_ticks")
 NUM_PUBLISHERS = int(os.environ.get("NUM_PUBLISHERS", "3"))
 TICKER = os.environ.get("TICKER", "FOO/BAR")
@@ -69,6 +69,7 @@ def main():
                 )
 
             producer.poll(0)
+            producer.flush()
             time.sleep(0.1)  # 10 ticks per second per feed
 
     except KeyboardInterrupt:

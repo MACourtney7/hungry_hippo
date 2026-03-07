@@ -11,7 +11,8 @@ defmodule HippoIngest.Pipeline do
         module: {BroadwayKafka.Producer, [
           hosts: [{"kafka", 9092}],
           group_id: "hippo_ingest_group",
-          topics: ["raw_market_ticks"]
+          topics: ["raw_market_ticks"],
+          receive_interval: 2000
         ]},
         concurrency: 1
       ],
@@ -36,10 +37,23 @@ defmodule HippoIngest.Pipeline do
   end
 
   defp ensure_worker_running(feed_id) do
-    case DynamicSupervisor.start_child(HippoIngest.WorkerSupervisor, {HippoIngest.WindowWorker, feed_id}) do
-      {:ok, _pid} -> :ok
-      {:error, {:already_started, _pid}} -> :ok
-      error -> Logger.error("Failed to start worker for #{feed_id}: #{inspect(error)}")
+    # Check if the process is already in the Registry
+    case Registry.lookup(HippoIngest.FeedRegistry, feed_id) do
+      [{pid, _}] ->
+        {:ok, pid}
+
+      [] ->
+        # Try to start it, but wrap it in a check to see if the Supervisor is alive
+        if Process.whereis(HippoIngest.WorkerSupervisor) do
+          DynamicSupervisor.start_child(
+            HippoIngest.WorkerSupervisor,
+            {HippoIngest.WindowWorker, feed_id}
+          )
+        else
+          # If the supervisor isn't ready yet, wait 100ms and try once more
+          Process.sleep(100)
+          ensure_worker_running(feed_id)
+        end
     end
   end
 end
