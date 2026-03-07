@@ -9,7 +9,7 @@ services:
       - /app/_build
     tty: true
     stdin_open: true
-    command: sh -c "cd apps/hippo_ingest && mix deps.get && mix compile && mix run --no-halt"
+    command: sh -c "mix deps.get && mix compile && mix run --no-halt"
     depends_on:
       kafka:
         condition: service_healthy

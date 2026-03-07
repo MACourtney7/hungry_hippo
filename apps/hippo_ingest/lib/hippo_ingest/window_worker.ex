@@ -1,6 +1,7 @@
 defmodule HippoIngest.WindowWorker do
   use GenServer
   require Logger
+  alias HippoNative.Native
 
   # --- Client API ---
 
@@ -21,19 +22,21 @@ defmodule HippoIngest.WindowWorker do
 
   @impl true
   def init(feed_id) do
-    Logger.info("Starting WindowWorker for feed: #{feed_id}")
-    # State is initialized as an empty list
-    {:ok, []}
+    Logger.info("Starting Welford Analytics for: #{feed_id}")
+    # Initialize our Rust state
+    {:ok, %{feed_id: feed_id, welford: Native.init_state()}}
   end
 
   @impl true
-  def handle_cast({:process_tick, price}, state) do
-    # Prepend new price, take only the first 10 elements to maintain the sliding window
-    new_window = [price | state] |> Enum.take(10)
+  def handle_cast({:process_tick, price}, %{welford: old_state} = state) do
+    # Call the Rust NIF
+    {new_welford, z_score} = Native.update_and_get_z_score(old_state, price)
 
-    # Debug log to verify the window is updating
-    Logger.debug("Window for #{inspect(self())}: #{inspect(new_window)}")
+    # Threshold for anomaly detection: Z-score > 3.0 is statistically significant
+    if z_score > 3.0 and old_state.count > 5 do
+      Logger.error("!!! ANOMALY DETECTED on #{state.feed_id} !!! Z-Score: #{Float.round(z_score, 2)} | Price: #{price}")
+    end
 
-    {:noreply, new_window}
+    {:noreply, %{state | welford: new_welford}}
   end
 end
