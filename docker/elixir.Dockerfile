@@ -2,7 +2,7 @@
 FROM elixir:1.19.5-otp-28-alpine
 
 # Install Rust
-RUN apk add --no-cache curl build-base
+RUN apk add --no-cache curl build-base cmake
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 

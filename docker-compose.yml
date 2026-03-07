@@ -5,10 +5,14 @@ services:
       dockerfile: docker/elixir.Dockerfile
     volumes:
       - .:/app
+      - /app/deps
+      - /app/_build
     tty: true
     stdin_open: true
-    networks:
-      - hungry_hippo_net
+    command: sh -c "cd apps/hippo_ingest && mix deps.get && mix compile && mix run --no-halt"
+    depends_on:
+      kafka:
+        condition: service_healthy
 
   oracle:
     build:
@@ -18,8 +22,6 @@ services:
       - ./oracle:/app
     tty: true
     stdin_open: true
-    networks:
-      - hungry_hippo_net
 
   kafka:
     image: apache/kafka:latest
@@ -55,7 +57,3 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-
-networks:
-  hungry_hippo_net:
-    driver: bridge
