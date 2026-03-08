@@ -68,6 +68,9 @@ services:
       TICKER: FOO/BAR
       TICK_RATE: "0.1"
       VOLATILITY: "0.0001"
+    stdin_open: true
+    tty: true
+    restart: always
     depends_on:
       kafka:
         condition: service_healthy

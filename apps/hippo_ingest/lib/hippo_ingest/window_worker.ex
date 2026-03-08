@@ -32,33 +32,20 @@ defmodule HippoIngest.WindowWorker do
   end
 
   @impl true
-  def handle_cast({:process_tick, price}, %{welford: old_state} = state) do
-    # 1. Update Statistical State (Rust NIF)
-    {new_welford, z_score} = Native.update_and_get_z_score(old_state, price)
-
-    # 2. Add to local buffer
+  def handle_cast({:process_tick, price}, state) do
+    {new_welford, z_score} = Native.update_and_get_z_score(state.welford, price)
     new_buffer = [price | Enum.take(state.buffer, 9)]
 
-    # --- DEBUG: See every tick while we troubleshoot ---
-    Logger.debug("Tick: #{price} | Z: #{Float.round(z_score, 2)} | Count: #{new_welford.count}")
-
     if z_score > 3.0 and new_welford.count > 10 do
-      # 3. PATH B: Correct pattern match for the {price, delta} tuple
+      # PATH B: Anomaly detected - Call Oracle
       {corrected_price, delta} = call_oracle(state.feed_id, new_buffer)
 
-      Logger.warning("""
-      🎯 ANOMALY DETECTED!
-      Feed: #{state.feed_id}
-      Original: #{price}
-      AI Correction: #{corrected_price}
-      Divergence: #{Float.round(delta, 2)}
-      Z-Score: #{Float.round(z_score, 2)}
-      """)
+      Logger.warning("CORRECTED: #{price} -> #{corrected_price} (Δ: #{delta})")
 
-      publish_clean_tick(state.feed_id, corrected_price)
+      publish_clean_tick(state.feed_id, corrected_price, true, delta)
     else
-      # 4. PATH A: Standard Throughput
-      publish_clean_tick(state.feed_id, price)
+      # PATH A: Standard throughput
+      publish_clean_tick(state.feed_id, price, false, 0.0)
     end
 
     {:noreply, %{state | welford: new_welford, buffer: new_buffer}}
@@ -83,8 +70,37 @@ defmodule HippoIngest.WindowWorker do
     end
   end
 
-  defp publish_clean_tick(_feed_id, _price) do
-    # Logic to send back to Kafka 'clean_market_ticks' topic
-    :ok
+  defp publish_clean_tick(feed_id, price, is_corrected, delta) do
+    topic = "clean_market_ticks"
+    client = :kafka_client
+
+    payload =
+      %{
+        feed_id: feed_id,
+        price: price,
+        delta: delta,
+        is_corrected: is_corrected,
+        timestamp: System.system_time(:millisecond)
+      }
+      |> Jason.encode!()
+
+    # Produce synchronously to ensure data integrity
+    case :brod.produce_sync(client, topic, :random, "", payload) do
+      :ok ->
+        :ok
+      {:error, :producer_not_found} ->
+        # If not found, try to start it and retry once
+        IO.puts("🔄 Producer not found for #{topic}, attempting manual start...")
+        :brod.start_producer(client, topic, [])
+
+        # Wait a tiny bit for registration
+        Process.sleep(100)
+
+        # Retry the produce
+        :brod.produce_sync(client, topic, :random, "", payload)
+      error ->
+        IO.puts("❌ Egress Failed: #{inspect(error)}")
+        error
+    end
   end
 end

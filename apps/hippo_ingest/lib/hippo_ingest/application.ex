@@ -4,17 +4,34 @@ defmodule HippoIngest.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # 1. Registry to look up WindowWorkers by feed_id
-      {Registry, keys: :unique, name: HippoIngest.FeedRegistry},
+      # Registry to look up WindowWorkers by feed_id
+      {Registry, [keys: :unique, name: HippoIngest.FeedRegistry]},
 
-      # 2. DynamicSupervisor to spawn isolated WindowWorkers on demand
-      {DynamicSupervisor, strategy: :one_for_one, name: HippoIngest.WorkerSupervisor},
+      # DynamicSupervisor to spawn isolated WindowWorkers on demand
+      {DynamicSupervisor, [strategy: :one_for_one, name: HippoIngest.WorkerSupervisor]},
 
-      # 3. The Broadway Kafka Pipeline consumer
-      HippoIngest.Pipeline
+      # Erlang brod_client
+      %{
+        id: :kafka_egress_client,
+        start: {:brod_client, :start_link, [[{"kafka", 9092}], :kafka_client, []]},
+        type: :worker,
+        restart: :permanent,
+        shutdown: 5000
+      },
+
+      # The Broadway Kafka Pipeline consumer
+      {HippoIngest.Pipeline, []}
     ]
 
     opts = [strategy: :one_for_one, name: HippoIngest.Supervisor]
-    Supervisor.start_link(children, opts)
+    # Start the supervisor
+    case Supervisor.start_link(children, opts) do
+      {:ok, pid} ->
+        # Manually start the producer once the client is definitely up
+        _ = :brod.start_producer(:kafka_client, "clean_market_ticks", [])
+        {:ok, pid}
+
+      error -> error
+    end
   end
 end
