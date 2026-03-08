@@ -32,21 +32,29 @@ defmodule HippoIngest.WindowWorker do
   end
 
   @impl true
-  def handle_cast({:process_tick, price}, state) do
-    {new_welford, z_score} = Native.update_and_get_z_score(state.welford, price)
-    new_buffer = [price | Enum.take(state.buffer, 9)]
+  def handle_cast({:process_tick, raw_price}, state) do
+    {new_welford, z_score} = Native.update_and_get_z_score(state.welford, raw_price)
+    new_buffer = [raw_price | Enum.take(state.buffer, 9)]
 
-    if z_score > 3.0 and new_welford.count > 10 do
-      # PATH B: Anomaly detected - Call Oracle
-      {corrected_price, delta} = call_oracle(state.feed_id, new_buffer)
+    {clean_price, is_corrected, delta} =
+      if z_score > 3.0 and new_welford.count > 10 do
+        # PATH B: Anomaly detected - Call Oracle
+        {corrected_price, delta} = call_oracle(state.feed_id, new_buffer)
+        Logger.warning("CORRECTED: #{raw_price} -> #{corrected_price} (Δ: #{delta})")
+        {corrected_price, true, delta}
+      else
+        # PATH A: Standard throughput
+        {raw_price, false, 0.0}
+      end
 
-      Logger.warning("CORRECTED: #{price} -> #{corrected_price} (Δ: #{delta})")
+    # --- Telemetry ---
+    :telemetry.execute([:hippo_ingest, :tick, :price], %{price: raw_price}, %{feed_id: state.feed_id, type: "raw"})
+    :telemetry.execute([:hippo_ingest, :tick, :price], %{price: clean_price}, %{feed_id: state.feed_id, type: "clean"})
+    :telemetry.execute([:hippo_ingest, :ticks, :total], %{count: 1}, %{feed_id: state.feed_id, is_corrected: is_corrected})
+    if is_corrected, do: :telemetry.execute([:hippo_ingest, :tick, :delta], %{value: abs(delta)}, %{feed_id: state.feed_id})
 
-      publish_clean_tick(state.feed_id, corrected_price, true, delta)
-    else
-      # PATH A: Standard throughput
-      publish_clean_tick(state.feed_id, price, false, 0.0)
-    end
+    # --- Egress ---
+    publish_clean_tick(state.feed_id, clean_price, is_corrected, delta)
 
     {:noreply, %{state | welford: new_welford, buffer: new_buffer}}
   end

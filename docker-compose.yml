@@ -1,8 +1,29 @@
 services:
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    command: --config.file=/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+          - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards
+          - ./dashboards:/var/lib/grafana/dashboards
+
   ingestor:
     build:
       context: .
       dockerfile: docker/elixir.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
     volumes:
       - .:/app
       - /app/deps
