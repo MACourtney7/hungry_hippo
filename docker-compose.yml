@@ -16,6 +16,7 @@ services:
     volumes:
           - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards
           - ./dashboards:/var/lib/grafana/dashboards
+          - ./provisioning/datasources:/etc/grafana/provisioning/datasources
 
   ingestor:
     build:

@@ -23,7 +23,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "efff8kecxd5vkd"
+        "uid": "hippo-prom"
       },
       "fieldConfig": {
         "defaults": {
@@ -115,7 +115,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "efff8kecxd5vkd"
+        "uid": "hippo-prom"
       },
       "fieldConfig": {
         "defaults": {
@@ -174,7 +174,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "efff8kecxd5vkd"
+        "uid": "hippo-prom"
       },
       "fieldConfig": {
         "defaults": {
@@ -234,7 +234,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "efff8kecxd5vkd"
+        "uid": "hippo-prom"
       },
       "fieldConfig": {
         "defaults": {
@@ -329,7 +329,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "efff8kecxd5vkd"
+        "uid": "hippo-prom"
       },
       "fieldConfig": {
         "defaults": {
@@ -461,7 +461,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "efff8kecxd5vkd"
+            "uid": "hippo-prom"
           },
           "editorMode": "builder",
           "expr": "hippo_ingest_tick_price{type=\"raw\", feed_id=~\"$feed\"}",
@@ -472,7 +472,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "efff8kecxd5vkd"
+            "uid": "hippo-prom"
           },
           "editorMode": "builder",
           "expr": "hippo_ingest_tick_price{type=\"clean\", feed_id=~\"$feed\"}",
@@ -501,7 +501,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "efff8kecxd5vkd"
+          "uid": "hippo-prom"
         },
         "definition": "label_values(hippo_ingest_tick_price,feed_id)",
         "includeAll": true,
