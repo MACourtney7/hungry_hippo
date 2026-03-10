@@ -27,8 +27,10 @@ services:
       - "4000:4000"
     volumes:
       - .:/app
-      - /app/deps
       - /app/_build
+      - /app/deps
+      - /app/priv/native
+      - /app/apps/hippo_native/priv/native
     tty: true
     stdin_open: true
     command: sh -c "mix deps.get && mix compile && mix run --no-halt"

@@ -34,10 +34,10 @@ defmodule HippoIngest.WindowWorker do
   @impl true
   def handle_cast({:process_tick, raw_price}, state) do
     {new_welford, z_score} = Native.update_and_get_z_score(state.welford, raw_price)
-    new_buffer = [raw_price | Enum.take(state.buffer, 9)]
+    new_buffer = [raw_price | Enum.take(state.buffer, 49)]
 
     {clean_price, is_corrected, delta} =
-      if z_score > 3.0 and new_welford.count > 10 do
+      if z_score > 3.0 and new_welford.count > 50 do
         # PATH B: Anomaly detected - Call Oracle
         {corrected_price, delta} = call_oracle(state.feed_id, new_buffer)
         Logger.warning("CORRECTED: #{raw_price} -> #{corrected_price} (Δ: #{delta})")
