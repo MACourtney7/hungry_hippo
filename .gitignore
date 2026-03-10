@@ -44,4 +44,4 @@ coverage.xml
 .tmp.driveupload
 
 # Context share with Gemini Chat
-hh_docs/hh_gemini/
+docs/hh_gemini/
