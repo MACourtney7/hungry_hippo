@@ -33,6 +33,7 @@ coverage.xml
 
 # OS / Editor
 .DS_Store
+Icon?
 *.swp
 *~
 .vscode/
