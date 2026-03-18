@@ -43,5 +43,6 @@ coverage.xml
 .tmp.drivedownload
 .tmp.driveupload
 
-# Context share with Gemini Chat
-docs/hh_gemini/
+# Generated documentation (ExDoc output)
+# Also includes context share with Gemini Chat
+docs/
