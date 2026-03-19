@@ -1,0 +1,51 @@
+# Elixir
+/_build
+/deps
+*.ez
+/rel
+
+# Rust
+/target
+Cargo.lock
+priv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.egg-info/
+.installed.cfg
+*.egg
+.eggs/
+
+# OS / Editor
+.DS_Store
+Icon?
+*.swp
+*~
+.vscode/
+.idea/
+.elixir_ls/
+
+# GDrive
+.tmp.drivedownload
+.tmp.driveupload
+
+# Generated documentation (ExDoc output)
+# Also includes context share with Gemini Chat
+docs/*
+!docs/*.md
+!docs/adr/

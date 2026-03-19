@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: 'Default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      # Point this to the sub-folder where the JSONs actually live
+      path: /var/lib/grafana/dashboards
