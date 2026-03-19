@@ -46,4 +46,6 @@ Icon?
 
 # Generated documentation (ExDoc output)
 # Also includes context share with Gemini Chat
-docs/
+docs/*
+!docs/*.md
+!docs/adr/

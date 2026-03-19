@@ -1,21 +1,15 @@
-# HippoIngest
+# HippoIngest (Elixir / OTP)
 
-**TODO: Add description**
+`HippoIngest` is the orchestration layer of the HungryHippo pipeline. It is responsible for consuming raw streams, maintaining chronological state, coordinating with the Rust NIF for mathematical evaluation, and handling HTTP fallback logic.
 
-## Installation
+## OTP Architecture & State Management
+* **`HippoIngest.Pipeline.Broadway`**: The Kafka consumer. Subscribes to `raw_market_ticks`. It parses the JSON and routes ticks to specific GenServers based on the `feed_id` partition key.
+* **`HippoIngest.FeedRegistry`**: A dynamic `Registry` used to look up the GenServer PID for a specific `feed_id`.
+* **`HippoIngest.WindowWorker` (GenServer)**: The core state manager.
+  * Maintains a strict **50-tick chronological buffer** (`state.buffer`).
+  * Maintains the **Rust Welford State** (`state.welford`).
+  * On every tick, it updates the NIF. If Z-Score > 3.0, it triggers the `call_oracle/2` HTTP POST request.
+  * **Fail-Open Design:** If the Oracle HTTP call fails, times out, or returns a non-200 status, the GenServer logs the error and returns the *raw* tick to prevent halting the stream.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `hippo_ingest` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:hippo_ingest, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/hippo_ingest>.
-
+## Telemetry & Egress
+All metrics are emitted via `:telemetry.execute/3` and scraped by Prometheus. Egress to the `clean_market_ticks` Kafka topic is handled synchronously via `:brod.produce_sync` to guarantee ordering and data integrity.
